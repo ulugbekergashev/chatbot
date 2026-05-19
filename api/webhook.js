@@ -1,3 +1,6 @@
+// Har bir foydalanuvchi uchun suhbat tarixini saqlash (xotira ichida)
+const conversationHistory = {};
+
 export default async function handler(req, res) {
   // 1. INSTAGRAM WEBHOOKNI TASDIQLASH (VERIFICATION)
   // Facebook/Meta sizning serveringiz ishlayotganini bilish uchun GET so'rov yuboradi
@@ -38,6 +41,18 @@ export default async function handler(req, res) {
 
               console.log(`📩 Yangi xabar: "${text}" | Kimdan: ${senderId}`);
 
+              // Foydalanuvchi suhbat tarixini yuklash (bo'lmasa yangi yaratish)
+              if (!conversationHistory[senderId]) {
+                conversationHistory[senderId] = [];
+              }
+              // Foydalanuvchi xabarini tarixga qo'shish
+              conversationHistory[senderId].push({ "role": "user", "content": text });
+              
+              // Tarix juda uzun bo'lib ketmasligi uchun oxirgi 10 ta xabarni saqlaymiz
+              if (conversationHistory[senderId].length > 10) {
+                conversationHistory[senderId] = conversationHistory[senderId].slice(-10);
+              }
+
               // 1. OpenRouter (AI) orqali xabarga javob o'ylash
               let aiReplyText = "Kechirasiz, hozir tushunmadim.";
               try {
@@ -71,13 +86,15 @@ Demo va Trial:
 - Trial so'rasa: 3 kunlik (kerak bo'lsa 7 kunlik) bepul sinov ochib beramiz.
 
 Sizning maqsadingiz: Mijozga sotuvchi sifatida muomala qilib, qiziqtirish, shifokorlar sonini aniqlash, demo/video darsliklarni tavsiya qilish va oxir-oqibat menejerimiz bog'lanishi uchun mijozdan telefon raqamini olish.`},
-                      {"role": "user", "content": text}
+                      ...conversationHistory[senderId]
                     ]
                   })
                 });
                 const aiData = await openRouterResponse.json();
                 if (openRouterResponse.ok && aiData.choices && aiData.choices[0]) {
                    aiReplyText = aiData.choices[0].message.content;
+                   // AI javobini tarixga qo'shish
+                   conversationHistory[senderId].push({ "role": "assistant", "content": aiReplyText });
                 } else {
                    console.error("❌ OpenRouter xatosi:", JSON.stringify(aiData));
                 }
