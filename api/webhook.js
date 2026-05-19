@@ -88,9 +88,12 @@ Sizning maqsadingiz: Mijozga sotuvchi sifatida muomala qilib, qiziqtirish, shifo
               // 2. Olingan javobni Instagram orqali mijozga jo'natish
               try {
                 const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
-                const PAGE_ID = process.env.INSTAGRAM_PAGE_ID; // Bu ko'pincha Facebook page ID bo'ladi
+                
+                // Token mavjudligini va to'g'riligini tekshirish uchun log (xavfsiz tarzda faqat boshini chiqaramiz)
+                console.log("Token tekshiruvi:", ACCESS_TOKEN ? ACCESS_TOKEN.substring(0, 15) + "..." : "❌ TOKEN TOPILMADI!");
 
-                const sendResponse = await fetch(`https://graph.facebook.com/v19.0/${PAGE_ID}/messages?access_token=${ACCESS_TOKEN}`, {
+                // O'ngdan-chapga /me orqali yuborish Page_ID chalkashligini oldini oladi
+                const sendResponse = await fetch(`https://graph.facebook.com/v19.0/me/messages?access_token=${ACCESS_TOKEN}`, {
                   method: "POST",
                   headers: {
                     "Content-Type": "application/json"
