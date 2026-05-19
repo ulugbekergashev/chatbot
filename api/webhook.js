@@ -48,7 +48,7 @@ export default async function handler(req, res) {
                     "Content-Type": "application/json"
                   },
                   body: JSON.stringify({
-                    "model": "meta-llama/llama-3-8b-instruct:free", // Tekin model misoli
+                    "model": "google/gemma-7b-it:free", // Tekin model misoli
                     "messages": [
                       {"role": "system", "content": `Siz DentaCRM - stomatologik klinikalar uchun maxsus boshqaruv (CRM) dasturining professional, sotuvga usta, do'stona va tajribali Sotuvchi-menejerisiz (Sales Manager). Vazifangiz mijoz savollariga to'g'ridan-to'g'ri kitobiy javob berish emas, balki mijozda qiziqish uyg'otib, ularni sotib olishga yoki mutaxassisga raqam qoldirishga undashdir. O'zbek tilida, doim "Siz" deb gapiring.
 
