@@ -87,7 +87,11 @@ Sizning maqsadingiz: Mijozga sotuvchi sifatida muomala qilib, qiziqtirish, shifo
 
               // 2. Olingan javobni Instagram orqali mijozga jo'natish
               try {
-                const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN;
+                // Foydalanuvchi xato yozgan bo'lishi ehtimolini hisobga olib, barcha yozilish turlarini tekshiramiz
+                const ACCESS_TOKEN = process.env.INSTAGRAM_ACCESS_TOKEN || 
+                                     process.env.INSTAGRAM_ACCES_TOKEN || 
+                                     process.env.ACCESS_TOKEN ||
+                                     process.env.ACCES_TOKEN;
                 
                 // Token mavjudligini va to'g'riligini tekshirish uchun log (xavfsiz tarzda faqat boshini chiqaramiz)
                 console.log("Token tekshiruvi:", ACCESS_TOKEN ? ACCESS_TOKEN.substring(0, 15) + "..." : "❌ TOKEN TOPILMADI!");
