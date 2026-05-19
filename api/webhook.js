@@ -20,9 +20,12 @@ export default async function handler(req, res) {
   // 2. INSTAGRAMDAN XABAR KELGANDA (POST REQUEST)
   if (req.method === 'POST') {
     const body = req.body;
+    
+    // Nima kelayotganini aniq ko'rish uchun log yozamiz
+    console.log("📥 KELGAN MA'LUMOT:", JSON.stringify(body));
 
-    // Kelgan ma'lumot rostdan ham Instagramdan kelganligini tekshiramiz
-    if (body.object === 'instagram') {
+    // Meta ba'zida instagram o'rniga page deb yuboradi
+    if (body.object === 'instagram' || body.object === 'page') {
       // Barcha yuborilgan ma'lumotlarni aylanib chiqamiz (array bo'lishi mumkin)
       for (const entry of body.entry) {
         
