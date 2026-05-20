@@ -53,43 +53,76 @@ export default async function handler(req, res) {
                 conversationHistory[senderId] = conversationHistory[senderId].slice(-10);
               }
 
-              // 1. OpenRouter (AI) orqali xabarga javob o'ylash - bir nechta model sinab ko'ramiz
+              // 1. Groq API orqali javob olish (Llama 3.3 70B modeli juda tez va aqlli)
               let aiReplyText = null;
-              const models = [
-                "meta-llama/llama-3.1-8b-instruct:free",
-                "qwen/qwen3-8b:free",
-                "meta-llama/llama-3.2-3b-instruct:free"
-              ];
               const systemPrompt = `⚠️ MUTLAQ QOIDA: Siz FAQAT O'ZBEK TILIDA javob berasiz. Hech qachon ingliz, rus yoki boshqa tilda javob bermaysiz.\n\nSiz DentaCRM - stomatologik klinikalar uchun maxsus boshqaruv (CRM) dasturining professional, sotuvga usta, do'stona va tajribali Sotuvchi-menejerisiz. Vazifangiz mijozda qiziqish uyg'otib, ularni sotib olishga yoki mutaxassisga raqam qoldirishga undashdir. Doim "Siz" deb murojaat qiling.\n\nSotuv qoidalari:\n1. Narx so'ralganda avval: "Klinikangizda nechta shifokor ishlaydi?" deb so'rang. Sonni bilgandan keyingina narxni ayting.\n2. Har bir javob oxirida suhbatni davom ettiruvchi savol bering.\n3. Qisqa yozing - 3-4 jumladan oshirmang.\n\nDentaCRM: Onlayn yozilish, omborxona, kassa, vrachlar oyligi, SMS/Telegram bot.\nVideo: https://youtube.com/@dentacrm?si=tvnjnALsejwcFRB6\n\nNarxlar (shifokorlar sonini bilgach ayting):\n- 1 shifokor: 190,000 so'm/oy\n- 2-3 shifokor: 290,000 so'm/oy\n- 3+: har qo'shimcha +50,000 so'm/oy\n- 1 yillik: 15% chegirma + bepul o'rnatish\n- Lokal: 390$ (bir martalik)\n\nDemo: dentacrm.uz | demoklinikaadmin | demoklinikaparol\nTrial: 3 kun bepul (7 kungacha uzaytirish mumkin)`;
 
-              for (const model of models) {
-                if (aiReplyText) break;
+              // Birinchi navbatda ultra-tezkor Groq API'dan foydalanamiz
+              if (process.env.GROQ_API_KEY) {
                 try {
-                  console.log(`🤖 Model: ${model}`);
-                  const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                  console.log("🤖 Groq API orqali javob o'ylanmoqda...");
+                  const groqResponse = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                      "Authorization": `Bearer ${process.env.GROQ_API_KEY}`,
                       "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                      "model": model,
+                      "model": "llama-3.3-70b-versatile",
                       "messages": [
                         {"role": "system", "content": systemPrompt},
                         ...conversationHistory[senderId]
                       ]
                     })
                   });
-                  const aiData = await openRouterResponse.json();
-                  if (openRouterResponse.ok && aiData.choices && aiData.choices[0]) {
-                    aiReplyText = aiData.choices[0].message.content;
-                    console.log(`✅ Model ishladi: ${model}`);
+                  
+                  const groqData = await groqResponse.json();
+                  if (groqResponse.ok && groqData.choices && groqData.choices[0]) {
+                    aiReplyText = groqData.choices[0].message.content;
+                    console.log("✅ Groq muvaffaqiyatli ishladi!");
                     conversationHistory[senderId].push({ "role": "assistant", "content": aiReplyText });
                   } else {
-                    console.error(`❌ Model (${model}) xatosi:`, JSON.stringify(aiData));
+                    console.error("❌ Groq xatosi:", JSON.stringify(groqData));
                   }
-                } catch (err) {
-                  console.error(`❌ Model (${model}) fetch xatosi:`, err);
+                } catch (groqErr) {
+                  console.error("❌ Groq fetch xatosi:", groqErr);
+                }
+              }
+
+              // Agar Groq ishlamay qolsa, OpenRouter bepul modellarini zaxira (fallback) sifatida ishlatamiz
+              if (!aiReplyText && process.env.OPENROUTER_API_KEY) {
+                console.log("⚠️ Groq ishlamadi, zaxira OpenRouter modellarini sinab ko'ramiz...");
+                const backupModels = [
+                  "meta-llama/llama-3.1-8b-instruct:free",
+                  "meta-llama/llama-3.2-3b-instruct:free"
+                ];
+                for (const model of backupModels) {
+                  if (aiReplyText) break;
+                  try {
+                    console.log(`🤖 Backup Model: ${model}`);
+                    const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                      method: "POST",
+                      headers: {
+                        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                        "Content-Type": "application/json"
+                      },
+                      body: JSON.stringify({
+                        "model": model,
+                        "messages": [
+                          {"role": "system", "content": systemPrompt},
+                          ...conversationHistory[senderId]
+                        ]
+                      })
+                    });
+                    const aiData = await openRouterResponse.json();
+                    if (openRouterResponse.ok && aiData.choices && aiData.choices[0]) {
+                      aiReplyText = aiData.choices[0].message.content;
+                      console.log(`✅ Backup Model ishladi: ${model}`);
+                      conversationHistory[senderId].push({ "role": "assistant", "content": aiReplyText });
+                    }
+                  } catch (err) {
+                    console.error(`❌ Backup Model (${model}) xatosi:`, err);
+                  }
                 }
               }
 
