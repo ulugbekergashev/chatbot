@@ -53,56 +53,48 @@ export default async function handler(req, res) {
                 conversationHistory[senderId] = conversationHistory[senderId].slice(-10);
               }
 
-              // 1. OpenRouter (AI) orqali xabarga javob o'ylash
-              let aiReplyText = "Kechirasiz, hozir tushunmadim.";
-              try {
-                const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-                  method: "POST",
-                  headers: {
-                    "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify({
-                    "model": "deepseek/deepseek-chat-v3-0324:free",
-                    "messages": [
-                      {"role": "system", "content": `⚠️ MUTLAQ QOIDA: Siz FAQAT O'ZBEK TILIDA javob berasiz. Hech qachon ingliz, rus yoki boshqa tilda javob bermaysiz. Agar biron sabab bilan boshqa tilda javob bermoqchi bo'lsangiz - BEKOR QILING va O'zbek tilida qaytadan yozing.
+              // 1. OpenRouter (AI) orqali xabarga javob o'ylash - bir nechta model sinab ko'ramiz
+              let aiReplyText = null;
+              const models = [
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemma-3-27b-it:free",
+                "google/gemma-3-12b-it:free"
+              ];
+              const systemPrompt = `⚠️ MUTLAQ QOIDA: Siz FAQAT O'ZBEK TILIDA javob berasiz. Hech qachon ingliz, rus yoki boshqa tilda javob bermaysiz.\n\nSiz DentaCRM - stomatologik klinikalar uchun maxsus boshqaruv (CRM) dasturining professional, sotuvga usta, do'stona va tajribali Sotuvchi-menejerisiz. Vazifangiz mijozda qiziqish uyg'otib, ularni sotib olishga yoki mutaxassisga raqam qoldirishga undashdir. Doim "Siz" deb murojaat qiling.\n\nSotuv qoidalari:\n1. Narx so'ralganda avval: "Klinikangizda nechta shifokor ishlaydi?" deb so'rang. Sonni bilgandan keyingina narxni ayting.\n2. Har bir javob oxirida suhbatni davom ettiruvchi savol bering.\n3. Qisqa yozing - 3-4 jumladan oshirmang.\n\nDentaCRM: Onlayn yozilish, omborxona, kassa, vrachlar oyligi, SMS/Telegram bot.\nVideo: https://youtube.com/@dentacrm?si=tvnjnALsejwcFRB6\n\nNarxlar (shifokorlar sonini bilgach ayting):\n- 1 shifokor: 190,000 so'm/oy\n- 2-3 shifokor: 290,000 so'm/oy\n- 3+: har qo'shimcha +50,000 so'm/oy\n- 1 yillik: 15% chegirma + bepul o'rnatish\n- Lokal: 390$ (bir martalik)\n\nDemo: dentacrm.uz | demoklinikaadmin | demoklinikaparol\nTrial: 3 kun bepul (7 kungacha uzaytirish mumkin)`;
 
-Siz DentaCRM - stomatologik klinikalar uchun maxsus boshqaruv (CRM) dasturining professional, sotuvga usta, do'stona va tajribali Sotuvchi-menejerisiz. Vazifangiz mijozda qiziqish uyg'otib, ularni sotib olishga yoki mutaxassisga raqam qoldirishga undashdir. Doim "Siz" deb murojaat qiling.
-
-Sotuv qoidalari (Juda muhim):
-1. Narx so'ralganda darhol hammasini yozib yubormang! Avval: "Dasturimiz narxi klinikangizdagi shifokorlar soniga bog'liq. Klinikangizda nechta shifokor ishlaydi?" deb so'rang. Mijoz sonni aytgandan keyingina narxni ayting.
-2. Har bir javob oxirida suhbatni davom ettiruvchi savol bering.
-3. Qisqa va aniq yozing - 3-4 jumladan oshirmang.
-
-DentaCRM haqida:
-- Imkoniyatlari: Onlayn yozilish, omborxona, kassa, vrachlar oyligi, SMS/Telegram bot.
-- Video darslik: https://youtube.com/@dentacrm?si=tvnjnALsejwcFRB6
-
-Narxlar (faqat shifokorlar sonini bilgach ayting):
-- 1 shifokor: 190,000 so'm/oy
-- 2-3 shifokor: 290,000 so'm/oy
-- 3+ dan ortiq: har qo'shimcha shifokor uchun +50,000 so'm/oy
-- 1 yillik to'lovda: 15% chegirma + bepul o'rnatish
-- Lokal versiya: bir martalik 390$ (1-2 shifokorli klinikalarga mos)
-
-Demo: dentacrm.uz | Login: demoklinikaadmin | Parol: demoklinikaparol
-Trial: 3 kunlik bepul (kerak bo'lsa 7 kun)
-
-Maqsad: Qiziqtirish → Shifokorlar sonini bilish → Narx aytish → Demo/trial taklif → Telefon raqam olish.`},
-                      ...conversationHistory[senderId]
-                    ]
-                  })
-                });
-                const aiData = await openRouterResponse.json();
-                if (openRouterResponse.ok && aiData.choices && aiData.choices[0]) {
-                   aiReplyText = aiData.choices[0].message.content;
-                   // AI javobini tarixga qo'shish
-                   conversationHistory[senderId].push({ "role": "assistant", "content": aiReplyText });
-                } else {
-                   console.error("❌ OpenRouter xatosi:", JSON.stringify(aiData));
+              for (const model of models) {
+                if (aiReplyText) break;
+                try {
+                  console.log(`🤖 Model: ${model}`);
+                  const openRouterResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                      "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+                      "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                      "model": model,
+                      "messages": [
+                        {"role": "system", "content": systemPrompt},
+                        ...conversationHistory[senderId]
+                      ]
+                    })
+                  });
+                  const aiData = await openRouterResponse.json();
+                  if (openRouterResponse.ok && aiData.choices && aiData.choices[0]) {
+                    aiReplyText = aiData.choices[0].message.content;
+                    console.log(`✅ Model ishladi: ${model}`);
+                    conversationHistory[senderId].push({ "role": "assistant", "content": aiReplyText });
+                  } else {
+                    console.error(`❌ Model (${model}) xatosi:`, JSON.stringify(aiData));
+                  }
+                } catch (err) {
+                  console.error(`❌ Model (${model}) fetch xatosi:`, err);
                 }
-              } catch (error) {
-                console.error("OpenRouter fetch xatosi:", error);
+              }
+
+              if (!aiReplyText) {
+                aiReplyText = "Kechirasiz, hozir texnik muammo bor. Biroz kutib, qayta yuboring.";
               }
 
               // 2. Olingan javobni Instagram orqali mijozga jo'natish
