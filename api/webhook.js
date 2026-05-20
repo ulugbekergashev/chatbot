@@ -63,7 +63,7 @@ export default async function handler(req, res) {
                     "Content-Type": "application/json"
                   },
                   body: JSON.stringify({
-                    "model": "mistralai/mistral-7b-instruct:free", // Ishonchli va barqaror bepul model
+                    "model": "deepseek/deepseek-chat-v3-0324:free",
                     "messages": [
                       {"role": "system", "content": `⚠️ MUTLAQ QOIDA: Siz FAQAT O'ZBEK TILIDA javob berasiz. Hech qachon ingliz, rus yoki boshqa tilda javob bermaysiz. Agar biron sabab bilan boshqa tilda javob bermoqchi bo'lsangiz - BEKOR QILING va O'zbek tilida qaytadan yozing.
 
