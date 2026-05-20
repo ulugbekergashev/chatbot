@@ -56,9 +56,9 @@ export default async function handler(req, res) {
               // 1. OpenRouter (AI) orqali xabarga javob o'ylash - bir nechta model sinab ko'ramiz
               let aiReplyText = null;
               const models = [
-                "meta-llama/llama-3.3-70b-instruct:free",
-                "google/gemma-3-27b-it:free",
-                "google/gemma-3-12b-it:free"
+                "meta-llama/llama-3.1-8b-instruct:free",
+                "qwen/qwen3-8b:free",
+                "meta-llama/llama-3.2-3b-instruct:free"
               ];
               const systemPrompt = `⚠️ MUTLAQ QOIDA: Siz FAQAT O'ZBEK TILIDA javob berasiz. Hech qachon ingliz, rus yoki boshqa tilda javob bermaysiz.\n\nSiz DentaCRM - stomatologik klinikalar uchun maxsus boshqaruv (CRM) dasturining professional, sotuvga usta, do'stona va tajribali Sotuvchi-menejerisiz. Vazifangiz mijozda qiziqish uyg'otib, ularni sotib olishga yoki mutaxassisga raqam qoldirishga undashdir. Doim "Siz" deb murojaat qiling.\n\nSotuv qoidalari:\n1. Narx so'ralganda avval: "Klinikangizda nechta shifokor ishlaydi?" deb so'rang. Sonni bilgandan keyingina narxni ayting.\n2. Har bir javob oxirida suhbatni davom ettiruvchi savol bering.\n3. Qisqa yozing - 3-4 jumladan oshirmang.\n\nDentaCRM: Onlayn yozilish, omborxona, kassa, vrachlar oyligi, SMS/Telegram bot.\nVideo: https://youtube.com/@dentacrm?si=tvnjnALsejwcFRB6\n\nNarxlar (shifokorlar sonini bilgach ayting):\n- 1 shifokor: 190,000 so'm/oy\n- 2-3 shifokor: 290,000 so'm/oy\n- 3+: har qo'shimcha +50,000 so'm/oy\n- 1 yillik: 15% chegirma + bepul o'rnatish\n- Lokal: 390$ (bir martalik)\n\nDemo: dentacrm.uz | demoklinikaadmin | demoklinikaparol\nTrial: 3 kun bepul (7 kungacha uzaytirish mumkin)`;
 
